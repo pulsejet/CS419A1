@@ -203,7 +203,6 @@ TRAIN = True
 PRUNE = True
 TEST = True
 PRED_ID = 'Id'
-CHECK_TRAIN_SANITY = False
 
 if MODEL == 0:
     num_valid = 400
@@ -235,19 +234,3 @@ if TEST:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
         for i, row in enumerate(test_data):
             file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
-
-if CHECK_TRAIN_SANITY:
-    m = pickle.load(open('model.p', 'rb'))
-    i = 0
-    for d in train_data:
-        if d[OUTPUT] != m.forward_propagate(d):
-            print(d, m.forward_propagate(d))
-            for i, f in enumerate(train_data):
-                match = True
-                for key in train_data[0]:
-                    if key== OUTPUT:
-                        continue
-                    if f[key] != d[key]:
-                        match = False
-                if match:
-                    print(i)
