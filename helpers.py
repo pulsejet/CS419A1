@@ -1,9 +1,8 @@
-import numpy as np
 import csv
-import pprint
 import math
 import operator
 import pickle
+from random import randint
 
 class Node:
     def __init__(self):
@@ -50,14 +49,14 @@ def get_sorted_data(data, feature):
     return sorted(data, key=lambda k: k[feature])
 
 def get_split_loss(split, pred):
-    loss = 0
-    for x in split:
-        loss += (x[OUTPUT] - pred) ** 2
-    return loss
+    """Get loss from a split and prediction."""
+    return sum([(x[OUTPUT] - pred) ** 2 for x in split])
 
 def get_total_split_loss(split_1, split_2, split_1_pred, split_2_pred):
-    s1 = get_split_loss(split_1, split_1_pred)
-    s2 = get_split_loss(split_2, split_2_pred)
+    """Get total loss of a proposed split."""
+    total_nos = len(split_1) + len(split_2)
+    s1 = (len(split_1) / total_nos) * get_split_loss(split_1, split_1_pred)
+    s2 = (len(split_2) / total_nos) * get_split_loss(split_2, split_2_pred)
     return s1 + s2
 
 def lastIndex(lst, val):
@@ -96,6 +95,10 @@ def get_best_splitter(sorted_data, feature):
 
 
 def train(data, node):
+    # Check for excessively long branches
+    if node.depth >= MAX_DEPTH:
+        return
+
     # Get best splitter feature
     splitters = {}
     splitters_losses = {}
@@ -103,7 +106,7 @@ def train(data, node):
     # Iterate all keys in first row, assuming same keys
     for key in data[0]:
         # Skip OUTPUT
-        if key == OUTPUT:
+        if key == OUTPUT or randint(0, 10) < DROPOUT * 10:
             continue
 
         # Sort and get best splittere
@@ -142,11 +145,11 @@ def train(data, node):
     print("VALID", loss, " -- TRAIN ", train_loss, " -- ", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
     # Create children if have elements
-    if len(split_1) > 0:
+    if len(split_1) >= MIN_LEAF:
         node.lowerchild = Node()
         node.lowerchild.depth = node.depth  + 1
         train(split_1, node.lowerchild)
-    if len(split_2) > 0:
+    if len(split_2) >= MIN_LEAF:
         node.upperchild = Node()
         node.upperchild.depth = node.depth  + 1
         train(split_2, node.upperchild)
@@ -166,26 +169,36 @@ def prune(data, node):
     if node.upperchild and node.upperchild.pruned:
         node.upperchild = None
 
+    # Do not over-prune
+    if node.depth <= MIN_DEPTH:
+        return
+
     # Try pruning current node
     loss_pre_prune = validation_loss(data, root)
     node.pruned = True
     loss_post_prune = validation_loss(data, root)
     if loss_post_prune > loss_pre_prune:
         node.pruned = False
-    print(node.depth, node.pruned, loss_pre_prune, loss_post_prune)
+    print(node.depth, node.pruned, validation_loss(valid_data, root))
 
 def validation_loss(data, node):
     """Calculate loss over given data."""
     loss = sum([(row[OUTPUT] - (node.forward_propagate(row) or 0)) ** 2 for row in data])
-    return math.sqrt(loss)
+    return loss / len(data)
 
 MODEL = 0
+MIN_DEPTH = 3
+MAX_DEPTH = 15
+MIN_LEAF = 2
+DROPOUT = 0
 TRAIN = True
 PRUNE = True
+TEST = True
+PRED_ID = 'Id'
 CHECK_TRAIN_SANITY = False
 
 if MODEL == 0:
-    num_valid = 400
+    num_valid = 100
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
 else:
@@ -206,6 +219,14 @@ if PRUNE:
     root = pickle.load(open('model.p', 'rb'))
     prune(valid_data, root)
     pickle.dump(root, open('model_pruned.p', 'wb'))
+
+if TEST:
+    root = pickle.load(open('model_pruned.p', 'rb'))
+    test_data = read_data('test.csv')
+    with open('pred.csv', 'w') as file:
+        file.write(PRED_ID + ',' + OUTPUT + '\n')
+        for i, row in enumerate(test_data):
+            file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
 
 if CHECK_TRAIN_SANITY:
     m = pickle.load(open('model.p', 'rb'))
