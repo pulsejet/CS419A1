@@ -205,12 +205,14 @@ TEST = True
 PRED_ID = 'Id'
 
 if MODEL == 0:
+    MAX_DEPTH = 15
     num_valid = 400
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
     TEST_CSV = 'test.csv'
 elif MODEL == 1:
-    num_valid = 100
+    MAX_DEPTH = 10
+    num_valid = 150
     OUTPUT = 'output'
     fulldata = read_data('train1.csv')
     TEST_CSV = 'test1.csv'
