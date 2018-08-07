@@ -3,6 +3,7 @@ import math
 import operator
 import pickle
 from random import randint
+from collections import Counter
 
 class Node:
     def __init__(self):
@@ -40,9 +41,8 @@ def read_data(file):
     return [dict([a, float(x)] for a, x in data.items()) for data in csv.DictReader(open(file, 'r'))]
 
 def most_common(lst):
-    """Find the most common element in list
-    Adapted from https://stackoverflow.com/a/1518632"""
-    return max(set(lst), key=lst.count)
+    """Find the most common element in list"""
+    return Counter(lst).most_common(1)[0][0]
 
 def get_sorted_data(data, feature):
     """Sort data with a feature."""
@@ -90,9 +90,16 @@ def get_best_splitter(sorted_data, feature):
 
     if not split_points:
         return None
-    best_point = min(split_points.items(), key=operator.itemgetter(1))[0]
+
+    best_point = min(split_points, key=split_points.get)
+    best_points = [x for x in split_points if split_points[x] == split_points[best_point]]
+    best_point = median(best_points)
+
     return best_point, split_points[best_point]
 
+def median(lst):
+    sortedLst = sorted(lst)
+    return sortedLst[(len(lst) - 1) // 2]
 
 def train(data, node):
     # Check for excessively long branches
@@ -179,6 +186,7 @@ def prune(data, node):
     loss_post_prune = validation_loss(data, root)
     if loss_post_prune > loss_pre_prune:
         node.pruned = False
+
     print(node.depth, node.pruned, validation_loss(valid_data, root))
 
 def validation_loss(data, node):
@@ -198,7 +206,7 @@ PRED_ID = 'Id'
 CHECK_TRAIN_SANITY = False
 
 if MODEL == 0:
-    num_valid = 100
+    num_valid = 400
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
 else:
