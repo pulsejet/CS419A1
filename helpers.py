@@ -194,7 +194,7 @@ def validation_loss(data, node):
     loss = sum([(row[OUTPUT] - (node.forward_propagate(row) or 0)) ** 2 for row in data])
     return loss / len(data)
 
-MODEL = 0
+MODEL = 1
 MIN_DEPTH = 3
 MAX_DEPTH = 15
 MIN_LEAF = 2
@@ -208,10 +208,17 @@ if MODEL == 0:
     num_valid = 400
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
+    TEST_CSV = 'test.csv'
+elif MODEL == 1:
+    num_valid = 100
+    OUTPUT = 'output'
+    fulldata = read_data('train1.csv')
+    TEST_CSV = 'test1.csv'
 else:
     num_valid = 2
     OUTPUT = 'Power(output)'
     fulldata = read_data('toy_dataset.csv')
+    TEST_CSV = 'toytest.csv'
 
 train_data = fulldata[num_valid:]
 valid_data = fulldata[:num_valid]
@@ -229,7 +236,7 @@ if PRUNE:
 
 if TEST:
     root = pickle.load(open('model_pruned.p', 'rb'))
-    test_data = read_data('test.csv')
+    test_data = read_data(TEST_CSV)
     with open('pred.csv', 'w') as file:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
         for i, row in enumerate(test_data):
