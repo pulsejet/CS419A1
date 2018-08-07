@@ -30,19 +30,11 @@ class Node:
         if data[self.splitter] > self.splitter_value:
             if not self.upperchild:
                 return self.upperpred
-            pred = self.upperchild.forward_propagate(data)
-            if pred:
-                return pred
-            else:
-                return self.upperpred
+            return self.upperchild.forward_propagate(data) or self.upperpred
         else:
             if not self.lowerchild:
                 return self.lowerpred
-            pred = self.lowerchild.forward_propagate(data)
-            if pred:
-                return pred
-            else:
-                return self.lowerpred
+            return self.lowerchild.forward_propagate(data) or self.lowerpred
 
 def read_data(file):
     """Read a CSV file as list of dicts with float values."""
@@ -134,11 +126,15 @@ def train(data, node):
     f = get_sorted_data(data, best_splitter)
     split_1, split_2 = get_split(f, best_splitter, splitters[best_splitter])
 
+    # Get most common classes for splits
+    split_1_pred = most_common([d[OUTPUT] for d in split_1])
+    split_2_pred = most_common([d[OUTPUT] for d in split_2])
+
     # Set node attributes
     node.splitter = best_splitter
     node.splitter_value = splitters[best_splitter]
-    node.lowerpred = most_common([d[OUTPUT] for d in split_1])
-    node.upperpred = most_common([d[OUTPUT] for d in split_2])
+    node.lowerpred = split_1_pred
+    node.upperpred = split_2_pred
 
     # Validation
     loss = validation_loss(valid_data, root)
@@ -158,38 +154,38 @@ def train(data, node):
     return node
 
 def prune(data, node):
+    """Prune a node recursively."""
     if node.lowerchild and not node.lowerchild.pruned:
         prune(data, node.lowerchild)
     if node.upperchild and not node.upperchild.pruned:
         prune(data, node.upperchild)
 
+    # Remove dead nodes
     if node.lowerchild and node.lowerchild.pruned:
         node.lowerchild = None
     if node.upperchild and node.upperchild.pruned:
         node.upperchild = None
 
-    if (not node.lowerchild) or (not node.upperchild):
-        loss_pre_prune = validation_loss(data, root)
-        node.pruned = True
-        loss_post_prune = validation_loss(data, root)
-        if loss_post_prune > loss_pre_prune:
-            node.pruned = False
-        print(node.depth, node.pruned, loss_pre_prune, loss_post_prune)
+    # Try pruning current node
+    loss_pre_prune = validation_loss(data, root)
+    node.pruned = True
+    loss_post_prune = validation_loss(data, root)
+    if loss_post_prune > loss_pre_prune:
+        node.pruned = False
+    print(node.depth, node.pruned, loss_pre_prune, loss_post_prune)
 
 def validation_loss(data, node):
     """Calculate loss over given data."""
-    loss = 0
-    for row in data:
-        loss += (row[OUTPUT] - node.forward_propagate(row)) ** 2
+    loss = sum([(row[OUTPUT] - (node.forward_propagate(row) or 0)) ** 2 for row in data])
     return math.sqrt(loss)
 
 MODEL = 0
-TRAIN = False
+TRAIN = True
 PRUNE = True
 CHECK_TRAIN_SANITY = False
 
 if MODEL == 0:
-    num_valid = 300
+    num_valid = 400
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
 else:
@@ -209,6 +205,7 @@ if TRAIN:
 if PRUNE:
     root = pickle.load(open('model.p', 'rb'))
     prune(valid_data, root)
+    pickle.dump(root, open('model_pruned.p', 'wb'))
 
 if CHECK_TRAIN_SANITY:
     m = pickle.load(open('model.p', 'rb'))
