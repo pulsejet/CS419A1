@@ -241,7 +241,7 @@ root = None
 
 def train_tree(train_file, out_model, output='predicted.csv',
                max_depth=15, min_depth=1, numvalid=200, dropout=0, min_leaf=2,
-               loss_prob=True, loss='mse'):
+               loss_prob=True, loss='mse', verbose=False):
     """Front facing API to train a single tree."""
     global MAX_DEPTH
     global MIN_DEPTH
@@ -257,7 +257,7 @@ def train_tree(train_file, out_model, output='predicted.csv',
     global LOSS
 
     # Never show output
-    VERBOSE = False
+    VERBOSE = verbose
 
     # Setup variables
     MIN_DEPTH = min_depth
@@ -290,7 +290,8 @@ def train_tree(train_file, out_model, output='predicted.csv',
 
 def train_forest(train_file, out_model, output='predicted.csv',
                  max_depth=15, min_depth=1, numvalid=200, dropout=0.2,
-                 num_trees=4, min_leaf=2, loss_prob=False, loss='mse'):
+                 num_trees=4, min_leaf=2, loss_prob=False, loss='mse',
+                 verbose=False):
     """Front facing API to train a random forest."""
 
     global MAX_DEPTH
@@ -309,7 +310,7 @@ def train_forest(train_file, out_model, output='predicted.csv',
     global LOSS
 
     # Don't Show output for forest
-    VERBOSE = False
+    VERBOSE = verbose
 
     # Setup variables
     MIN_DEPTH = min_depth
