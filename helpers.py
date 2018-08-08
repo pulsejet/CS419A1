@@ -1,4 +1,5 @@
 import csv
+import time
 import math
 import operator
 import pickle
@@ -274,9 +275,15 @@ def train_tree(train_file, out_model, output='predicted.csv',
     valid_data = fulldata[:num_valid]
 
     # Train and prune
+    start = time.time()
     root = Node()
     train(train_data, root)
     prune(valid_data, root)
+    end = time.time()
+
+    # Print time elapsed
+    print("Grew and pruned tree in", str(end - start) + "s")
+    print("Final validation loss", validation_loss(valid_data, root))
 
     # Pickle model
     pickle.dump(root, open(out_model, 'wb'))
@@ -332,18 +339,25 @@ def train_forest(train_file, out_model, output='predicted.csv',
         root = Node()
         roots.append(root)
         train_data = full_train_data[i * sect : (i+1) * sect]
+        start = time.time()
         train(train_data, root)
         prune(valid_data, root)
-        print("Trained tree #" + str(i + 1), forest_validation_loss(valid_data, roots))
+        end = time.time()
+        print("Trained tree #" + str(i + 1) + " in " + str(end-start) + "s", "\tVALID LOSS: ", forest_validation_loss(valid_data, roots))
 
     # Pickle model
     pickle.dump(roots, open(out_model, 'wb'))
 
 def predict(file_model, test_file, out_file, output):
     """Predict on test data from a trained model."""
+    # Load model
     model = pickle.load(open(file_model, 'rb'))
 
+    # Read input test data
     test_data = read_data(test_file)
+
+    # Predict
+    start = time.time()
     with open(out_file, 'w') as file:
         file.write(PRED_ID + ',' + output + '\n')
         for i, row in enumerate(test_data):
@@ -351,3 +365,9 @@ def predict(file_model, test_file, out_file, output):
                 file.write(str(i + 1) + ',' + str(model.forward_propagate(row)) + '\n')
             else:
                 file.write(str(i + 1) + ',' + str(forest_propagate(row, model)) + '\n')
+
+    end = time.time()
+
+    # Print inference time
+    print("Inferred predicted values in", str(end - start) + "s")
+    print("Average inference time per sample", str((end - start) / len(test_data)) + "s")
