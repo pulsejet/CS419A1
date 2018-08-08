@@ -22,7 +22,7 @@ except getopt.GetoptError as err:
 # Initialize Defaults
 FILE = 'train.csv'
 FOREST = False
-VERBOSE = False
+VERBOSE = not FOREST
 LOSS = 'mse'
 
 # Set arguments
