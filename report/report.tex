@@ -1,0 +1,85 @@
+\documentclass{article}
+\title{CS419: Assignment 1}
+\author{Varun Patil - 160010005}
+\usepackage[margin=0.8in]{geometry}
+
+\usepackage[utf8]{inputenc}
+\usepackage{pgfplots}
+
+\begin{document}
+	\maketitle
+	
+\section{Introduction \& Tools}
+The problem statement is to create a regression tree to fit the given data. No python libraries may or have been used including but not limited to machine learning libraries such as \texttt{sklearn}, \texttt{TensorFlow} and other general computational libraries such as \texttt{numpy}. All code has been written and tested in Python 3.6 on Microsoft Windows 10. The only library used is \texttt{matplotlib} for plotting loss graph.
+
+\section{Training Algorithm}
+The regression tree was trained by creating splits for each feature at every step, minimizing the loss by choosing the split with lowest loss of all. In case multiple splits have the same minimum loss, one of these is chosen randomly. In case one feature has multiple points of splits with the same loss, the median of these is taken to make the split. Internally, splits are taken by sorting the data to split for each feature and then iterating it in the reverse sense calculating losses for each possible split. All trees were constrained to a maximum depth of 15 levels.
+
+\section{Dataset Split}
+25\% (150) and 5\% (200) of the samples were used for validation and pruning for the first and second (larger) dataset respectively. These values were obtained by experimentation for lowest validation loss.
+
+\section{Notes on Implementation}
+All training, pruning and inference code is kept in a single file \texttt{helpers.py} which is non-specific to the data provided. Functions from this file are called everywhere else with the hyperparameters as arguments. All \texttt{train.py} files take the following arguments:
+\begin{itemize}
+	\item \texttt{-d} or \texttt{--data\_file}\\
+	The CSV file to be used as data input. Defaults to \texttt{train.csv}
+	\item \texttt{-m} or \texttt{--mean\_squared}\\
+	Use the mean squared error for loss. This argument is redundant.
+	\item \texttt{-a} or \texttt{--absolute}\\
+	Use the absolute error for loss.
+	\item \texttt{-v} or \texttt{--verbose}\\
+	Turn on verbose mode. This will significantly increase training time.
+	\item \texttt{-f} or \texttt{--forest}\\
+	Train a random forest instead of a single tree.
+	\item \texttt{-l} or \texttt{--min\_leaf\_size}\\
+	Specify the minimum number of examples for each leaf node.
+\end{itemize}
+
+All \texttt{infer.py} files take no arguments and produce \texttt{output.csv} using the trained pickled \texttt{model} and \texttt{test.csv}
+
+\newpage
+
+\section{Results}
+\subsection{Dataset 1}
+A minimum mean squared validation loss of approx. \textbf{3.20} and absolute loss of \textbf{3.70} were observed after training. Similar values were obtained on the test dataset with loss around 4.5 to 4.8. Due to the random nature of selection of conflicting best features, some variation in losses was observed for different trained trees on the same hyperparameters. Each leaf was constrained to have a minimum of 2 samples, changing this to 10 increased final validation loss to approx. 5.44. The model showed exactly zero loss on training data before pruning. The tree had approx. \textbf{130-140 nodes} after pruning.
+
+\input{d1valid.tex}
+\input{d1train.tex}
+
+\subsection{Dataset 2}
+A minimum mean squared validation loss of approx. \textbf{0.57} and absolute loss of \textbf{0.39} were observed after training. Very minor loss on training data was observed before pruning due to multiple samples having same features but different output values. The final tree had approx. \textbf{140-180 nodes} after pruning. As with dataset 1, each node leaf was constrained to 2 samples. For this dataset, a loss function with the probabilities of each split multiplying the loss yielded better results and much better timings.
+
+\input{d2valid.tex}
+\input{d2train.tex}
+
+\newpage
+
+\section{Random Forest}
+The existed model could be easily extended to a random forest. Training a forest with 32 trees on Dataset 1 with a feature drop probability of 0.2 yielded a validation loss of approx. \textbf{2.2} for MSE and \textbf{2.3} for absolute error. For Dataset 2, a similar forest with 16 trees and dropout 0.2 yielded MSE on validation data as approx. \textbf{0.25}.
+
+\vspace{2mm}
+\input{d1forest.tex}
+\input{d2forest.tex}
+
+\section{Timings}
+The following approximate timings were observed for each operation, taking into account errors due to CPU and memory caching by averaging:
+\begin{itemize}
+	\item Training - Dataset 1 - MSE - \textbf{0.45s}
+	\item Training - Dataset 1 - MAE - \textbf{0.43s}
+	\item Training - Dataset 2 - MSE - \textbf{19.95s}
+	\item Training - Dataset 2 - MAE - \textbf{18.82s}
+	\item Inference - Dataset 1 - \textbf{0.001s} (8$\mu$s per sample)
+	\item Inference - Dataset 2 - \textbf{0.004s} (10$\mu$s per sample)
+\end{itemize}
+Notes:
+\begin{enumerate}
+	\item All timings were calculated using CPU nano-timing
+	\item Training includes pruning
+	\item All timings were calculated with the non-verbose mode
+\end{enumerate}
+
+\section{Conclusion}
+We may conclude that using a decision tree may produce significant and acceptable results on certain types of datasets, with improvements on using random forests. The loss function does not have significant bearing on the results, since it gives contradicting results for two datasets.\\
+The only references used for this Assignment were class notes, StackOverflow and python documentation.
+
+\end{document}
