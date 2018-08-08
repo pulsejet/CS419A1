@@ -3,6 +3,7 @@ import math
 import operator
 import pickle
 from random import randint
+from random import shuffle
 from collections import Counter
 
 class Node:
@@ -189,24 +190,32 @@ def prune(data, node):
 
     print(node.depth, node.pruned, validation_loss(valid_data, root))
 
-def validation_loss(data, node):
+def validation_loss(data, tree):
     """Calculate loss over given data."""
-    loss = sum([(row[OUTPUT] - (node.forward_propagate(row) or 0)) ** 2 for row in data])
+    loss = sum([(row[OUTPUT] - (tree.forward_propagate(row) or 0)) ** 2 for row in data])
     return loss / len(data)
 
-MODEL = 1
+def forest_validation_loss(data, forest):
+    """Calculate loss over given data from multiple roots."""
+    loss = sum([(row[OUTPUT] - forest_propagate(row, forest)) ** 2 for row in data])
+    return loss / len(data)
+
+def forest_propagate(data, forest):
+    return sum([tree.forward_propagate(data) or 0 for tree in forest]) / len(forest)
+
+MODEL = 0
 MIN_DEPTH = 3
 MAX_DEPTH = 15
 MIN_LEAF = 2
-DROPOUT = 0
+DROPOUT = 0.6
+NUM_TREES = 10
 TRAIN = True
-PRUNE = True
 TEST = True
 PRED_ID = 'Id'
 
 if MODEL == 0:
     MAX_DEPTH = 15
-    num_valid = 400
+    num_valid = 200
     OUTPUT = 'quality'
     fulldata = read_data('train.csv')
     TEST_CSV = 'test.csv'
@@ -222,22 +231,41 @@ else:
     fulldata = read_data('toy_dataset.csv')
     TEST_CSV = 'toytest.csv'
 
-train_data = fulldata[num_valid:]
+full_train_data = fulldata[num_valid:] * int(NUM_TREES * 0.7 + 1)
 valid_data = fulldata[:num_valid]
 
+train_data = []
+
 root = Node()
+roots = []
+
+sect = len(full_train_data) // NUM_TREES
+
+for i in range(0, NUM_TREES):
+    root = Node()
+    train_data = full_train_data[i * sect : (i+1) * sect]
+    train(train_data, root)
+    prune(valid_data, root)
+    roots.append(root)
+
+print(forest_validation_loss(valid_data, roots))
+
+if TEST:
+    test_data = read_data(TEST_CSV)
+    with open('pred.csv', 'w') as file:
+        file.write(PRED_ID + ',' + OUTPUT + '\n')
+        for i, row in enumerate(test_data):
+            file.write(str(i + 1) + ',' + str(forest_propagate(row, roots)) + '\n')
+
+exit()
 
 if TRAIN:
     train(train_data, root)
+    prune(valid_data, root)
     pickle.dump(root, open('model.p', 'wb'))
 
-if PRUNE:
-    root = pickle.load(open('model.p', 'rb'))
-    prune(valid_data, root)
-    pickle.dump(root, open('model_pruned.p', 'wb'))
-
 if TEST:
-    root = pickle.load(open('model_pruned.p', 'rb'))
+    root = pickle.load(open('model.p', 'rb'))
     test_data = read_data(TEST_CSV)
     with open('pred.csv', 'w') as file:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
