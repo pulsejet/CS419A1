@@ -40,6 +40,19 @@ class Node:
                 return self.lowerpred
             return self.lowerchild.forward_propagate(data) or self.lowerpred
 
+    def count_nodes(self):
+        """Count total number of children."""
+        count = 0
+        if self.lowerchild:
+            count += self.lowerchild.count_nodes()
+        else:
+            count += 1
+        if self.upperchild:
+            count += self.upperchild.count_nodes()
+        else:
+            count += 1
+        return count
+
 def read_data(file):
     """Read a CSV file as list of dicts with float values."""
     return [dict([a, float(x)] for a, x in data.items()) for data in csv.DictReader(open(file, 'r'))]
@@ -168,7 +181,7 @@ def train(data, node):
     if VERBOSE:
         loss = validation_loss(valid_data, root)
         train_loss = validation_loss(train_data[:100], root)
-        print("VALID LOSS", loss, "\tTRAIN LOSS", train_loss, "\tSPLIT", best_splitter, node.splitter_value, len(split_1), len(split_2))
+        print("VALID LOSS", loss, "\tTRAIN LOSS", train_loss, "\tNODES", root.count_nodes(), "\tSPLIT", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
     # Create children if have elements
     if len(split_1) >= MIN_LEAF:
@@ -207,7 +220,7 @@ def prune(data, node):
         node.pruned = False
 
     if VERBOSE:
-        print('DEPTH', node.depth, '\tPRUNED', node.pruned, '\tVALID LOSS', validation_loss(valid_data, root))
+        print('DEPTH', node.depth, '\tPRUNED', node.pruned, "\tNODES", root.count_nodes(), '\tVALID LOSS', validation_loss(valid_data, root))
 
 def validation_loss(data, tree):
     """Calculate loss over given data."""
