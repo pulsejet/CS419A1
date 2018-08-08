@@ -58,9 +58,13 @@ def get_split_loss(split, pred):
 
 def get_total_split_loss(split_1, split_2, split_1_pred, split_2_pred):
     """Get total loss of a proposed split."""
-    total_nos = len(split_1) + len(split_2)
-    s1 = (len(split_1) / total_nos) * get_split_loss(split_1, split_1_pred)
-    s2 = (len(split_2) / total_nos) * get_split_loss(split_2, split_2_pred)
+    if LOSS_PROB:
+        total_nos = len(split_1) + len(split_2)
+        s1 = (len(split_1) / total_nos) * get_split_loss(split_1, split_1_pred)
+        s2 = (len(split_2) / total_nos) * get_split_loss(split_2, split_2_pred)
+    else:
+        s1 = get_split_loss(split_1, split_1_pred)
+        s2 = get_split_loss(split_2, split_2_pred)
     return s1 + s2
 
 def lastIndex(lst, val):
@@ -222,6 +226,7 @@ NUM_TREES = None
 VERBOSE = True
 PRED_ID = 'Id'
 
+LOSS_PROB = None
 num_valid = None
 OUTPUT = None
 train_data = None
@@ -229,7 +234,8 @@ valid_data = None
 root = None
 
 def train_tree(train_file, test_file, out_file, output='predicted.csv',
-               max_depth=15, min_depth=1, numvalid=200, dropout=0, min_leaf=2):
+               max_depth=15, min_depth=1, numvalid=200, dropout=0, min_leaf=2,
+               loss_prob=True):
     """Front facing API to train a single tree."""
     global MAX_DEPTH
     global MIN_DEPTH
@@ -241,6 +247,7 @@ def train_tree(train_file, test_file, out_file, output='predicted.csv',
     global VERBOSE
     global DROPOUT
     global MIN_LEAF
+    global LOSS_PROB
 
     # Show output for a single tree
     VERBOSE = True
@@ -253,6 +260,7 @@ def train_tree(train_file, test_file, out_file, output='predicted.csv',
     fulldata = read_data(train_file)
     DROPOUT = dropout
     MIN_LEAF = min_leaf
+    LOSS_PROB = loss_prob
 
     # Setup training data
     train_data = fulldata[num_valid:]
@@ -271,7 +279,8 @@ def train_tree(train_file, test_file, out_file, output='predicted.csv',
             file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
 
 def train_forest(train_file, test_file, out_file, output='predicted.csv',
-                 max_depth=15, min_depth=1, numvalid=200, dropout=0.2, num_trees=4, min_leaf=2):
+                 max_depth=15, min_depth=1, numvalid=200, dropout=0.2,
+                 num_trees=4, min_leaf=2, loss_prob=True):
     """Front facing API to train a random forest."""
 
     global MAX_DEPTH
@@ -286,6 +295,7 @@ def train_forest(train_file, test_file, out_file, output='predicted.csv',
     global DROPOUT
     global NUM_TREES
     global MIN_LEAF
+    global LOSS_PROB
 
     # Don't Show output for forest
     VERBOSE = False
@@ -299,6 +309,7 @@ def train_forest(train_file, test_file, out_file, output='predicted.csv',
     DROPOUT = dropout
     NUM_TREES = num_trees
     MIN_LEAF = min_leaf
+    LOSS_PROB = loss_prob
 
     # Setup training data
     full_train_data = fulldata[num_valid:] * int(NUM_TREES * 0.7 + 1)
@@ -327,5 +338,6 @@ def train_forest(train_file, test_file, out_file, output='predicted.csv',
         for i, row in enumerate(test_data):
             file.write(str(i + 1) + ',' + str(forest_propagate(row, roots)) + '\n')
 
-train_forest('train1.csv', 'test1.csv', 'prednew.csv', 'output', max_depth=15, numvalid=150)
-train_tree('train1.csv', 'test1.csv', 'prednew1.csv', 'output', numvalid=150)
+#train_forest('train1.csv', 'test1.csv', 'prednew.csv', 'output', max_depth=15, numvalid=150, loss_prob=True)
+train_forest('train.csv', 'test.csv', 'prednew.csv', 'quality', max_depth=15, numvalid=150, loss_prob=False)
+#train_tree('train1.csv', 'test1.csv', 'prednew1.csv', 'output', numvalid=150)
