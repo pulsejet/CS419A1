@@ -6,6 +6,10 @@ import pickle
 from random import randint
 from collections import Counter
 
+# Make this true to dump graph data
+MAKE_GRAPH = False
+GRAPH = []
+
 class Node:
     """A single node in a tree."""
     def __init__(self):
@@ -183,6 +187,14 @@ def train(data, node):
         train_loss = validation_loss(train_data[:100], root)
         print("VALID LOSS", loss, "\tTRAIN LOSS", train_loss, "\tNODES", root.count_nodes(), "\tSPLIT", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
+        # Write Graph Data
+        if MAKE_GRAPH:
+            GRAPH.append({
+                "valid": loss,
+                "train": train_loss,
+                "nodes": root.count_nodes()
+            })
+
     # Create children if have elements
     if len(split_1) >= MIN_LEAF:
         node.lowerchild = Node()
@@ -297,6 +309,13 @@ def train_tree(train_file, out_model, output='predicted.csv',
     # Print time elapsed
     print("Grew and pruned tree in", str(end - start) + "s")
     print("Final validation loss", validation_loss(valid_data, root))
+
+    # Dump graph
+    if MAKE_GRAPH:
+        with open('graph.csv', 'w', newline='') as f:
+            w = csv.DictWriter(f, GRAPH[0].keys())
+            w.writeheader()
+            w.writerows(GRAPH)
 
     # Pickle model
     pickle.dump(root, open(out_model, 'wb'))
