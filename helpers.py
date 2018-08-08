@@ -279,15 +279,6 @@ def train_tree(train_file, out_model, output='predicted.csv',
     train(train_data, root)
     prune(valid_data, root)
 
-    """
-    # Write output
-    test_data = read_data(test_file)
-    with open(out_file, 'w') as file:
-        file.write(PRED_ID + ',' + OUTPUT + '\n')
-        for i, row in enumerate(test_data):
-            file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
-    """
-
     # Pickle model
     pickle.dump(root, open(out_model, 'wb'))
 
@@ -348,15 +339,6 @@ def train_forest(train_file, out_model, output='predicted.csv',
 
     # Pickle model
     pickle.dump(roots, open(out_model, 'wb'))
-
-    # Output to file
-    """
-    test_data = read_data(test_file)
-    with open(out_file, 'w') as file:
-        file.write(PRED_ID + ',' + OUTPUT + '\n')
-        for i, row in enumerate(test_data):
-            file.write(str(i + 1) + ',' + str(forest_propagate(row, roots)) + '\n')
-    """
 
 def predict(file_model, test_file, out_file, output):
     model = pickle.load(open(file_model, 'rb'))
