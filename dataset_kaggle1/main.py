@@ -10,6 +10,7 @@ sys.path.insert(0,parentdir)
 import getopt
 from helpers import train_tree
 from helpers import train_forest
+from helpers import predict
 
 # Get command line arguments
 try:
@@ -19,7 +20,7 @@ except getopt.GetoptError as err:
     sys.exit(2)
 
 # Initialize Defaults
-FILE = 'toy_dataset.csv'
+FILE = 'train.csv'
 FOREST = False
 VERBOSE = False
 LOSS = 'mse'
@@ -42,11 +43,14 @@ for o, a in opts:
     else:
         assert False, "Unhandled option " + o
 
+# Train
 if not FOREST:
-    train_tree(FILE, 'model', output='output', numvalid=2,
+    train_tree(FILE, 'model', output='output', numvalid=150,
                loss=LOSS, min_leaf=MIN_LEAF, max_depth=15, min_depth=3,
                verbose=VERBOSE)
 else:
-    train_forest(FILE, 'model', output='output', numvalid=2,
-                 loss=LOSS, min_leaf=MIN_LEAF, num_trees=128, dropout=0.2,
+    train_forest(FILE, 'model', output='output', numvalid=150,
+                 loss=LOSS, min_leaf=MIN_LEAF, num_trees=32, dropout=0.2,
                  max_depth=15, min_depth=3, verbose=VERBOSE)
+
+predict('model', 'test.csv', 'output.csv', 'output')

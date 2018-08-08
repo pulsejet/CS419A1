@@ -19,7 +19,7 @@ The regression tree was trained by creating splits for each feature at every ste
 25\% (150) and 5\% (200) of the samples were used for validation and pruning for the first and second (larger) dataset respectively. These values were obtained by experimentation for lowest validation loss.
 
 \section{Notes on Implementation}
-All training, pruning and inference code is kept in a single file \texttt{helpers.py} which is non-specific to the data provided. Functions from this file are called everywhere else with the hyperparameters as arguments. All \texttt{train.py} files take the following arguments:
+All training, pruning and inference code is kept in a single file \texttt{helpers.py} which is non-specific to the data provided. Functions from this file are called everywhere else with the hyperparameters as arguments. All \texttt{main.py} files take the following arguments:
 \begin{itemize}
 	\item \texttt{-d} or \texttt{--data\_file}\\
 	The CSV file to be used as data input. Defaults to \texttt{train.csv}
@@ -35,7 +35,7 @@ All training, pruning and inference code is kept in a single file \texttt{helper
 	Specify the minimum number of examples for each leaf node.
 \end{itemize}
 
-All \texttt{infer.py} files take no arguments and produce \texttt{output.csv} using the trained pickled \texttt{model} and \texttt{test.csv}
+All experiments were carried out on a Core i7-6500U mobile processor with 8GB memory, single threaded.
 
 \newpage
 

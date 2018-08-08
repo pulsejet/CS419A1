@@ -1,0 +1,6 @@
+*.aux
+*.log
+*.gz
+model
+junk
+__pycache__

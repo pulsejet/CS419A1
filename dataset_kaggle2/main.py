@@ -10,6 +10,7 @@ sys.path.insert(0,parentdir)
 import getopt
 from helpers import train_tree
 from helpers import train_forest
+from helpers import predict
 
 # Get command line arguments
 try:
@@ -44,10 +45,12 @@ for o, a in opts:
 
 # Train
 if not FOREST:
-    train_tree(FILE, 'model', output='output', numvalid=150,
-               loss=LOSS, min_leaf=MIN_LEAF, max_depth=15, min_depth=3,
+    train_tree(FILE, 'model', output='quality', numvalid=200,
+               loss=LOSS, min_leaf=MIN_LEAF, max_depth=15, min_depth=3, loss_prob=True,
                verbose=VERBOSE)
 else:
-    train_forest(FILE, 'model', output='output', numvalid=150,
+    train_forest(FILE, 'model', output='quality', numvalid=200,
                  loss=LOSS, min_leaf=MIN_LEAF, num_trees=32, dropout=0.2,
-                 max_depth=15, min_depth=3, verbose=VERBOSE)
+                 max_depth=15, min_depth=3, loss_prob=True, verbose=VERBOSE)
+
+predict('model', 'test.csv', 'output.csv', 'quality')
