@@ -203,12 +203,11 @@ def forest_validation_loss(data, forest):
 def forest_propagate(data, forest):
     return sum([tree.forward_propagate(data) or 0 for tree in forest]) / len(forest)
 
-MODEL = 0
+MODEL = 1
 MIN_DEPTH = 3
-MAX_DEPTH = 15
 MIN_LEAF = 2
-DROPOUT = 0.6
-NUM_TREES = 10
+DROPOUT = 0.3
+NUM_TREES = 120
 TRAIN = True
 TEST = True
 PRED_ID = 'Id'
@@ -242,6 +241,7 @@ roots = []
 sect = len(full_train_data) // NUM_TREES
 
 for i in range(0, NUM_TREES):
+    print("Training tree #" + str(i + 1))
     root = Node()
     train_data = full_train_data[i * sect : (i+1) * sect]
     train(train_data, root)
