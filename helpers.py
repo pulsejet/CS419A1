@@ -239,7 +239,7 @@ train_data = None
 valid_data = None
 root = None
 
-def train_tree(train_file, test_file, out_file, output='predicted.csv',
+def train_tree(train_file, out_model, output='predicted.csv',
                max_depth=15, min_depth=1, numvalid=200, dropout=0, min_leaf=2,
                loss_prob=True, loss='mse'):
     """Front facing API to train a single tree."""
@@ -256,8 +256,8 @@ def train_tree(train_file, test_file, out_file, output='predicted.csv',
     global LOSS_PROB
     global LOSS
 
-    # Show output for a single tree
-    VERBOSE = True
+    # Never show output
+    VERBOSE = False
 
     # Setup variables
     MIN_DEPTH = min_depth
@@ -279,16 +279,21 @@ def train_tree(train_file, test_file, out_file, output='predicted.csv',
     train(train_data, root)
     prune(valid_data, root)
 
+    """
     # Write output
     test_data = read_data(test_file)
     with open(out_file, 'w') as file:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
         for i, row in enumerate(test_data):
             file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
+    """
 
-def train_forest(train_file, test_file, out_file, output='predicted.csv',
+    # Pickle model
+    pickle.dump(root, open(out_model, 'wb'))
+
+def train_forest(train_file, out_model, output='predicted.csv',
                  max_depth=15, min_depth=1, numvalid=200, dropout=0.2,
-                 num_trees=4, min_leaf=2, loss_prob=True, loss='mse'):
+                 num_trees=4, min_leaf=2, loss_prob=False, loss='mse'):
     """Front facing API to train a random forest."""
 
     global MAX_DEPTH
@@ -341,13 +346,26 @@ def train_forest(train_file, test_file, out_file, output='predicted.csv',
         prune(valid_data, root)
         print("Trained tree #" + str(i + 1), forest_validation_loss(valid_data, roots))
 
+    # Pickle model
+    pickle.dump(roots, open(out_model, 'wb'))
+
     # Output to file
+    """
     test_data = read_data(test_file)
     with open(out_file, 'w') as file:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
         for i, row in enumerate(test_data):
             file.write(str(i + 1) + ',' + str(forest_propagate(row, roots)) + '\n')
+    """
 
-train_forest('train1.csv', 'test1.csv', 'prednew.csv', 'output', max_depth=15, numvalid=150, loss_prob=True, loss="mse")
-#train_forest('train.csv', 'test.csv', 'prednew.csv', 'quality', max_depth=15, numvalid=150, loss_prob=False)
-#train_tree('train1.csv', 'test1.csv', 'prednew1.csv', 'output', numvalid=150)
+def predict(file_model, test_file, out_file, output):
+    model = pickle.load(open(file_model, 'rb'))
+
+    test_data = read_data(test_file)
+    with open(out_file, 'w') as file:
+        file.write(PRED_ID + ',' + output + '\n')
+        for i, row in enumerate(test_data):
+            if type(model) == Node:
+                file.write(str(i + 1) + ',' + str(model.forward_propagate(row)) + '\n')
+            else:
+                file.write(str(i + 1) + ',' + str(forest_propagate(row, model)) + '\n')
