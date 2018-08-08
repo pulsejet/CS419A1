@@ -3,7 +3,6 @@ import math
 import operator
 import pickle
 from random import randint
-from random import shuffle
 from collections import Counter
 
 class Node:
