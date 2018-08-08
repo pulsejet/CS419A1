@@ -340,6 +340,7 @@ def train_forest(train_file, out_model, output='predicted.csv',
     pickle.dump(roots, open(out_model, 'wb'))
 
 def predict(file_model, test_file, out_file, output):
+    """Predict on test data from a trained model."""
     model = pickle.load(open(file_model, 'rb'))
 
     test_data = read_data(test_file)
