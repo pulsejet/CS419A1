@@ -168,7 +168,7 @@ def train(data, node):
     if VERBOSE:
         loss = validation_loss(valid_data, root)
         train_loss = validation_loss(train_data[:100], root)
-        print("VALID", loss, " -- TRAIN ", train_loss, " -- ", best_splitter, node.splitter_value, len(split_1), len(split_2))
+        print("VALID LOSS", loss, "\tTRAIN LOSS", train_loss, "\tSPLIT", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
     # Create children if have elements
     if len(split_1) >= MIN_LEAF:
@@ -207,7 +207,7 @@ def prune(data, node):
         node.pruned = False
 
     if VERBOSE:
-        print(node.depth, node.pruned, validation_loss(valid_data, root))
+        print('DEPTH', node.depth, '\tPRUNED', node.pruned, '\tVALID LOSS', validation_loss(valid_data, root))
 
 def validation_loss(data, tree):
     """Calculate loss over given data."""
