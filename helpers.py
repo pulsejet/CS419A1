@@ -7,6 +7,7 @@ from random import shuffle
 from collections import Counter
 
 class Node:
+    """A single node in a tree."""
     def __init__(self):
         self.splitter = None
         self.splitter_value = None
@@ -18,6 +19,7 @@ class Node:
         self.pruned = False
 
     def print(self):
+        """Print as readable."""
         print(" "  * (self.depth  * 2), self.splitter, self.splitter_value, self.lowerpred, self.upperpred)
         if self.lowerchild:
             self.lowerchild.print()
@@ -25,6 +27,7 @@ class Node:
             self.upperchild.print()
 
     def forward_propagate(self, data):
+        """Predict from a dict of features."""
         if not self.splitter or self.pruned:
             return None
 
@@ -61,15 +64,18 @@ def get_total_split_loss(split_1, split_2, split_1_pred, split_2_pred):
     return s1 + s2
 
 def lastIndex(lst, val):
+    """Get last index in list."""
     return len(lst) - 1 - lst[::-1].index(val)
 
 def get_split(sorted_data, feature, value):
+    """Split given feature and value."""
     i = lastIndex([d[feature] for d in sorted_data], value)
     split_1 = sorted_data[:i + 1]
     split_2 = sorted_data[i + 1:]
     return split_1, split_2
 
 def get_best_splitter(sorted_data, feature):
+    """Get split with minimum loss for a given feature."""
     split_points = {}
     highest = sorted_data[-1][feature]
     for i in reversed(range(0, len(sorted_data))):
@@ -99,10 +105,12 @@ def get_best_splitter(sorted_data, feature):
     return best_point, split_points[best_point]
 
 def median(lst):
+    """Get a rough median from a list of numbers."""
     sortedLst = sorted(lst)
     return sortedLst[(len(lst) - 1) // 2]
 
 def train(data, node):
+    """Train a node recursively."""
     # Check for excessively long branches
     if node.depth >= MAX_DEPTH:
         return
@@ -148,9 +156,10 @@ def train(data, node):
     node.upperpred = split_2_pred
 
     # Validation
-    loss = validation_loss(valid_data, root)
-    train_loss = validation_loss(train_data[:100], root)
-    print("VALID", loss, " -- TRAIN ", train_loss, " -- ", best_splitter, node.splitter_value, len(split_1), len(split_2))
+    if VERBOSE:
+        loss = validation_loss(valid_data, root)
+        train_loss = validation_loss(train_data[:100], root)
+        print("VALID", loss, " -- TRAIN ", train_loss, " -- ", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
     # Create children if have elements
     if len(split_1) >= MIN_LEAF:
@@ -188,7 +197,8 @@ def prune(data, node):
     if loss_post_prune > loss_pre_prune:
         node.pruned = False
 
-    print(node.depth, node.pruned, validation_loss(valid_data, root))
+    if VERBOSE:
+        print(node.depth, node.pruned, validation_loss(valid_data, root))
 
 def validation_loss(data, tree):
     """Calculate loss over given data."""
@@ -196,78 +206,126 @@ def validation_loss(data, tree):
     return loss / len(data)
 
 def forest_validation_loss(data, forest):
-    """Calculate loss over given data from multiple roots."""
+    """Get loss from a random forest (list of roots)."""
     loss = sum([(row[OUTPUT] - forest_propagate(row, forest)) ** 2 for row in data])
     return loss / len(data)
 
 def forest_propagate(data, forest):
+    """Get output from a random forest (list of roots)."""
     return sum([tree.forward_propagate(data) or 0 for tree in forest]) / len(forest)
 
-MODEL = 1
-MIN_DEPTH = 3
-MIN_LEAF = 2
-DROPOUT = 0.3
-NUM_TREES = 120
-TRAIN = True
-TEST = True
+MAX_DEPTH = None
+MIN_DEPTH = None
+MIN_LEAF = None
+DROPOUT = None
+NUM_TREES = None
+VERBOSE = True
 PRED_ID = 'Id'
 
-if MODEL == 0:
-    MAX_DEPTH = 15
-    num_valid = 200
-    OUTPUT = 'quality'
-    fulldata = read_data('train.csv')
-    TEST_CSV = 'test.csv'
-elif MODEL == 1:
-    MAX_DEPTH = 10
-    num_valid = 150
-    OUTPUT = 'output'
-    fulldata = read_data('train1.csv')
-    TEST_CSV = 'test1.csv'
-else:
-    num_valid = 2
-    OUTPUT = 'Power(output)'
-    fulldata = read_data('toy_dataset.csv')
-    TEST_CSV = 'toytest.csv'
+num_valid = None
+OUTPUT = None
+train_data = None
+valid_data = None
+root = None
 
-full_train_data = fulldata[num_valid:] * int(NUM_TREES * 0.7 + 1)
-valid_data = fulldata[:num_valid]
+def train_tree(train_file, test_file, out_file, output='predicted.csv',
+               max_depth=15, min_depth=1, numvalid=200, dropout=0, min_leaf=2):
+    """Front facing API to train a single tree."""
+    global MAX_DEPTH
+    global MIN_DEPTH
+    global num_valid
+    global OUTPUT
+    global train_data
+    global valid_data
+    global root
+    global VERBOSE
+    global DROPOUT
+    global MIN_LEAF
 
-train_data = []
+    # Show output for a single tree
+    VERBOSE = True
 
-root = Node()
-roots = []
+    # Setup variables
+    MIN_DEPTH = min_depth
+    MAX_DEPTH = max_depth
+    num_valid = numvalid
+    OUTPUT = output
+    fulldata = read_data(train_file)
+    DROPOUT = dropout
+    MIN_LEAF = min_leaf
 
-sect = len(full_train_data) // NUM_TREES
+    # Setup training data
+    train_data = fulldata[num_valid:]
+    valid_data = fulldata[:num_valid]
 
-for i in range(0, NUM_TREES):
-    print("Training tree #" + str(i + 1))
+    # Train and prune
     root = Node()
-    train_data = full_train_data[i * sect : (i+1) * sect]
     train(train_data, root)
     prune(valid_data, root)
-    roots.append(root)
 
-print(forest_validation_loss(valid_data, roots))
+    # Write output
+    test_data = read_data(test_file)
+    with open(out_file, 'w') as file:
+        file.write(PRED_ID + ',' + OUTPUT + '\n')
+        for i, row in enumerate(test_data):
+            file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
 
-if TEST:
-    test_data = read_data(TEST_CSV)
-    with open('pred.csv', 'w') as file:
+def train_forest(train_file, test_file, out_file, output='predicted.csv',
+                 max_depth=15, min_depth=1, numvalid=200, dropout=0.2, num_trees=4, min_leaf=2):
+    """Front facing API to train a random forest."""
+
+    global MAX_DEPTH
+    global MIN_DEPTH
+    global num_valid
+    global OUTPUT
+    global train_data
+    global valid_data
+    global root
+    global roots
+    global VERBOSE
+    global DROPOUT
+    global NUM_TREES
+    global MIN_LEAF
+
+    # Don't Show output for forest
+    VERBOSE = False
+
+    # Setup variables
+    MIN_DEPTH = min_depth
+    MAX_DEPTH = max_depth
+    num_valid = numvalid
+    OUTPUT = output
+    fulldata = read_data(train_file)
+    DROPOUT = dropout
+    NUM_TREES = num_trees
+    MIN_LEAF = min_leaf
+
+    # Setup training data
+    full_train_data = fulldata[num_valid:] * int(NUM_TREES * 0.7 + 1)
+    valid_data = fulldata[:num_valid]
+    train_data = []
+
+    # Start with barren land
+    roots = []
+
+    # Make sections in train data
+    sect = len(full_train_data) // NUM_TREES
+
+    # Grow all trees
+    for i in range(0, NUM_TREES):
+        root = Node()
+        roots.append(root)
+        train_data = full_train_data[i * sect : (i+1) * sect]
+        train(train_data, root)
+        prune(valid_data, root)
+        print("Trained tree #" + str(i + 1), forest_validation_loss(valid_data, roots))
+
+    # Output to file
+    test_data = read_data(test_file)
+    with open(out_file, 'w') as file:
         file.write(PRED_ID + ',' + OUTPUT + '\n')
         for i, row in enumerate(test_data):
             file.write(str(i + 1) + ',' + str(forest_propagate(row, roots)) + '\n')
 
-exit()
-
-if TRAIN:
-    train(train_data, root)
-    prune(valid_data, root)
-    pickle.dump(root, open('model.p', 'wb'))
-
-if TEST:
-    root = pickle.load(open('model.p', 'rb'))
-    test_data = read_data(TEST_CSV)
-    with open('pred.csv', 'w') as file:
-        file.write(PRED_ID + ',' + OUTPUT + '\n')
-        for i, row in enumerate(test_data):
-            file.write(str(i + 1) + ',' + str(root.forward_propagate(row)) + '\n')
+train_forest('train1.csv', 'test1.csv', 'prednew.csv', 'output', max_depth=15, numvalid=150)
+train_tree('train1.csv', 'test1.csv', 'prednew1.csv', 'output', numvalid=150)
