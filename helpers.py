@@ -7,7 +7,7 @@ from random import randint
 from collections import Counter
 
 # Make this true to dump graph data
-MAKE_GRAPH = True
+MAKE_GRAPH = False
 GRAPH = []
 GRAPH_PRUNE = []
 GRAPH_FOREST = []
@@ -332,6 +332,11 @@ def train_tree(train_file, out_model, output='predicted.csv',
         plt.xlabel('Nodes')
         plt.ylabel('Validation Dataset Loss')
         plt.title('Validation Dataset Loss (' + LOSS + ')')
+        try:
+            from matplotlib2tikz import save as tikz_save
+            tikz_save("valid.tex")
+        except ImportError:
+            pass
         plt.show()
 
         # Train plot
@@ -342,6 +347,11 @@ def train_tree(train_file, out_model, output='predicted.csv',
         plt.xlabel('Nodes')
         plt.ylabel('Training Dataset Loss')
         plt.title('Training Dataset Loss (' + LOSS + ')')
+        try:
+            from matplotlib2tikz import save as tikz_save
+            tikz_save("train.tex")
+        except ImportError:
+            pass
         plt.show()
 
     # Pickle model
@@ -423,7 +433,12 @@ def train_forest(train_file, out_model, output='predicted.csv',
         plt.legend()
         plt.xlabel('Nodes')
         plt.ylabel('Loss')
-        plt.title('Validation Loss (' + LOSS + ')')
+        plt.title('Forest Validation Loss (' + LOSS + ')')
+        try:
+            from matplotlib2tikz import save as tikz_save
+            tikz_save("forest.tex")
+        except ImportError:
+            pass
         plt.show()
 
     # Pickle model

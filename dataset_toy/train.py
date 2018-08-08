@@ -13,7 +13,7 @@ from helpers import train_forest
 
 # Get command line arguments
 try:
-    opts, args = getopt.getopt(sys.argv[1:], 'd:fmav', ['data_file=', 'forest', 'mean_squared', 'absolute', 'verbose'])
+    opts, args = getopt.getopt(sys.argv[1:], 'd:fmavl:', ['data_file=', 'forest', 'mean_squared', 'absolute', 'verbose', 'min_leaf_size='])
 except getopt.GetoptError as err:
     print(err)
     sys.exit(2)
@@ -21,8 +21,9 @@ except getopt.GetoptError as err:
 # Initialize Defaults
 FILE = 'toy_dataset.csv'
 FOREST = False
-VERBOSE = not FOREST
+VERBOSE = False
 LOSS = 'mse'
+MIN_LEAF = 2
 
 # Set arguments
 for o, a in opts:
@@ -36,14 +37,16 @@ for o, a in opts:
         LOSS = 'mse'
     elif o in ("-v", "--verbose"):
         VERBOSE = not VERBOSE
+    elif o in ("-l", "--min_leaf_size"):
+        MIN_LEAF = int(a)
     else:
         assert False, "Unhandled option " + o
 
 if not FOREST:
     train_tree(FILE, 'model', output='output', numvalid=2,
-               loss=LOSS, min_leaf=2, max_depth=15, min_depth=3,
+               loss=LOSS, min_leaf=MIN_LEAF, max_depth=15, min_depth=3,
                verbose=VERBOSE)
 else:
     train_forest(FILE, 'model', output='output', numvalid=2,
-                 loss=LOSS, min_leaf=2, num_trees=128, dropout=0.2,
+                 loss=LOSS, min_leaf=MIN_LEAF, num_trees=128, dropout=0.2,
                  max_depth=15, min_depth=3, verbose=VERBOSE)
