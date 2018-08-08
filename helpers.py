@@ -10,6 +10,7 @@ from collections import Counter
 MAKE_GRAPH = True
 GRAPH = []
 GRAPH_PRUNE = []
+GRAPH_FOREST = []
 TRAIN_VALID_COUNT = 1000
 
 class Node:
@@ -322,28 +323,25 @@ def train_tree(train_file, out_model, output='predicted.csv',
 
     # Dump graph
     if MAKE_GRAPH:
-        with open('graph.csv', 'w', newline='') as f:
-            w = csv.DictWriter(f, GRAPH[0].keys())
-            w.writeheader()
-            w.writerows(GRAPH)
-
         import matplotlib.pyplot as plt
 
         # Validation plot
-        plt.plot([x['nodes'] for x in GRAPH], [x['valid'] for x in GRAPH])
-        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['valid'] for x in GRAPH_PRUNE])
+        plt.plot([x['nodes'] for x in GRAPH], [x['valid'] for x in GRAPH], label='Training Loss')
+        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['valid'] for x in GRAPH_PRUNE], label='Pruning Loss')
+        plt.legend()
         plt.xlabel('Nodes')
-        plt.ylabel('Validation Loss')
-        plt.title('Validation Loss (' + LOSS + ')')
+        plt.ylabel('Validation Dataset Loss')
+        plt.title('Validation Dataset Loss (' + LOSS + ')')
         plt.show()
 
         # Train plot
         plt.clf()
-        plt.plot([x['nodes'] for x in GRAPH], [x['train'] for x in GRAPH])
-        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['train'] for x in GRAPH_PRUNE])
+        plt.plot([x['nodes'] for x in GRAPH], [x['train'] for x in GRAPH], label='Training Loss')
+        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['train'] for x in GRAPH_PRUNE], label='Pruning Loss')
+        plt.legend()
         plt.xlabel('Nodes')
-        plt.ylabel('Train Loss')
-        plt.title('Train Loss (' + LOSS + ')')
+        plt.ylabel('Training Dataset Loss')
+        plt.title('Training Dataset Loss (' + LOSS + ')')
         plt.show()
 
     # Pickle model
@@ -406,6 +404,27 @@ def train_forest(train_file, out_model, output='predicted.csv',
         prune(valid_data, root)
         end = time.time()
         print("Trained tree #" + str(i + 1) + " in " + str(end-start) + "s", "\tVALID LOSS: ", forest_validation_loss(valid_data, roots))
+
+        # Make training graphs
+        if MAKE_GRAPH:
+            GRAPH_FOREST.append({
+                'train': forest_validation_loss(train_data[:TRAIN_VALID_COUNT], roots),
+                'valid': forest_validation_loss(valid_data, roots),
+                'trees': i + 1,
+                'nodes': sum([r.count_nodes() for r in roots])
+            })
+
+    # Draw plots
+    if MAKE_GRAPH:
+        import matplotlib.pyplot as plt
+        # Validation plot
+        plt.plot([x['nodes'] for x in GRAPH_FOREST], [x['valid'] for x in GRAPH_FOREST], label='Validation Loss')
+        plt.plot([x['nodes'] for x in GRAPH_FOREST], [x['train'] for x in GRAPH_FOREST], label='Training Loss')
+        plt.legend()
+        plt.xlabel('Nodes')
+        plt.ylabel('Loss')
+        plt.title('Validation Loss (' + LOSS + ')')
+        plt.show()
 
     # Pickle model
     pickle.dump(roots, open(out_model, 'wb'))
