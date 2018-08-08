@@ -7,8 +7,10 @@ from random import randint
 from collections import Counter
 
 # Make this true to dump graph data
-MAKE_GRAPH = False
+MAKE_GRAPH = True
 GRAPH = []
+GRAPH_PRUNE = []
+TRAIN_VALID_COUNT = 1000
 
 class Node:
     """A single node in a tree."""
@@ -184,7 +186,7 @@ def train(data, node):
     # Validation
     if VERBOSE:
         loss = validation_loss(valid_data, root)
-        train_loss = validation_loss(train_data[:100], root)
+        train_loss = validation_loss(train_data[:TRAIN_VALID_COUNT], root)
         print("VALID LOSS", loss, "\tTRAIN LOSS", train_loss, "\tNODES", root.count_nodes(), "\tSPLIT", best_splitter, node.splitter_value, len(split_1), len(split_2))
 
         # Write Graph Data
@@ -233,6 +235,14 @@ def prune(data, node):
 
     if VERBOSE:
         print('DEPTH', node.depth, '\tPRUNED', node.pruned, "\tNODES", root.count_nodes(), '\tVALID LOSS', validation_loss(valid_data, root))
+
+        # Write Graph Data
+        if MAKE_GRAPH:
+            GRAPH_PRUNE.append({
+                "valid": validation_loss(valid_data, root),
+                "train": validation_loss(train_data[:TRAIN_VALID_COUNT], root),
+                "nodes": root.count_nodes()
+            })
 
 def validation_loss(data, tree):
     """Calculate loss over given data."""
@@ -316,6 +326,25 @@ def train_tree(train_file, out_model, output='predicted.csv',
             w = csv.DictWriter(f, GRAPH[0].keys())
             w.writeheader()
             w.writerows(GRAPH)
+
+        import matplotlib.pyplot as plt
+
+        # Validation plot
+        plt.plot([x['nodes'] for x in GRAPH], [x['valid'] for x in GRAPH])
+        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['valid'] for x in GRAPH_PRUNE])
+        plt.xlabel('Nodes')
+        plt.ylabel('Validation Loss')
+        plt.title('Validation Loss (' + LOSS + ')')
+        plt.show()
+
+        # Train plot
+        plt.clf()
+        plt.plot([x['nodes'] for x in GRAPH], [x['train'] for x in GRAPH])
+        plt.plot([x['nodes'] for x in GRAPH_PRUNE], [x['train'] for x in GRAPH_PRUNE])
+        plt.xlabel('Nodes')
+        plt.ylabel('Train Loss')
+        plt.title('Train Loss (' + LOSS + ')')
+        plt.show()
 
     # Pickle model
     pickle.dump(root, open(out_model, 'wb'))
