@@ -36,7 +36,7 @@ for o, a in opts:
     elif o in ("-m", "--mean_squared"):
         LOSS = 'mse'
     elif o in ("-v", "--verbose"):
-        VERBOSE = True
+        VERBOSE = not VERBOSE
     else:
         assert False, "Unhandled option " + o
 
