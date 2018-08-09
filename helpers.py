@@ -115,7 +115,7 @@ def get_best_splitter(sorted_data, feature):
     """Get split with minimum loss for a given feature."""
     split_points = {}
     highest = sorted_data[-1][feature]
-    for i in reversed(range(0, len(sorted_data))):
+    for i in reversed(range(MIN_LEAF - 1, len(sorted_data) - MIN_LEAF + 1)):
         # Get only for all split
         if sorted_data[i][feature] in split_points or sorted_data[i][feature] == highest:
             continue
