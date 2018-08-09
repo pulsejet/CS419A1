@@ -7,6 +7,11 @@ from random import randint
 from random import shuffle
 from collections import Counter
 
+#Set this to true to use standard deviation loss
+ALLOW_EXTENDED = True
+if ALLOW_EXTENDED:
+    import numpy as np
+
 # Make this true to dump graph data
 MAKE_GRAPH = False
 GRAPH = []
@@ -79,6 +84,8 @@ def get_split_loss(split, pred):
         return sum([(x[OUTPUT] - pred) ** 2 for x in split])
     elif LOSS == 'mae':
         return sum([abs(x[OUTPUT] - pred) for x in split])
+    elif LOSS == 'std':
+        return math.sqrt(np.var([x[OUTPUT] for x in split]))
     else:
         raise Exception("Unknown loss " + LOSS)
 
