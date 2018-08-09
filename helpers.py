@@ -4,6 +4,7 @@ import math
 import operator
 import pickle
 from random import randint
+from random import shuffle
 from collections import Counter
 
 # Make this true to dump graph data
@@ -147,12 +148,17 @@ def train(data, node):
     # Get best splitter feature
     splitters = {}
     splitters_losses = {}
+    num_dropped = 0
+
+    # Get shuffled keys
+    keys = [k for k in data[0] if k != OUTPUT]
+    shuffle(keys)
 
     # Iterate all keys in first row, assuming same keys
-    for key in data[0]:
-        # Skip OUTPUT
-        if key == OUTPUT or randint(0, 10) < DROPOUT * 10:
-            continue
+    for key in keys:
+        # Dropout
+        if randint(0, 10) < DROPOUT * 10 and (num_dropped < (len(data[0].keys()) - 1) * DROPOUT):
+            num_dropped += 1
 
         # Sort and get best splittere
         f = get_sorted_data(data, key)
@@ -402,13 +408,14 @@ def train_forest(train_file, out_model, output='predicted.csv',
     roots = []
 
     # Make sections in train data
-    sect = len(full_train_data) // NUM_TREES
+    sect = len(fulldata) - num_valid
 
     # Grow all trees
     for i in range(0, NUM_TREES):
         root = Node()
         roots.append(root)
-        train_data = full_train_data[i * sect : (i+1) * sect]
+        shuffle(full_train_data)
+        train_data = full_train_data[0: sect]
         start = time.time()
         train(train_data, root)
         prune(valid_data, root)
