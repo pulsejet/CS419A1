@@ -407,7 +407,7 @@ def train_forest(train_file, out_model, output='predicted.csv',
     LOSS = loss
 
     # Setup training data
-    full_train_data = fulldata[num_valid:] * int(NUM_TREES * 0.7 + 1)
+    full_train_data = fulldata[num_valid:] * 2
     valid_data = fulldata[:num_valid]
     train_data = []
 
