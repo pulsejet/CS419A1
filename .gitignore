@@ -2,7 +2,7 @@
 *.log
 *.gz
 *.tex
--report/report.tex
+!report.tex
 model
 junk
 __pycache__
