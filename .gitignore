@@ -1,6 +1,8 @@
 *.aux
 *.log
 *.gz
+*.tex
+-report/report.tex
 model
 junk
 __pycache__
