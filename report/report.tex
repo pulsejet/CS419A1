@@ -1,5 +1,5 @@
 \documentclass{article}
-\title{CS419: Assignment 1}
+\title{CS419M - Assignment 1}
 \author{Varun Patil - 160010005}
 \usepackage[margin=0.8in]{geometry}
 
@@ -21,18 +21,22 @@ The regression tree was trained by creating splits for each feature at every ste
 \section{Notes on Implementation}
 All training, pruning and inference code is kept in a single file \texttt{helpers.py} which is non-specific to the data provided. Functions from this file are called everywhere else with the hyperparameters as arguments. All \texttt{main.py} files take the following arguments:
 \begin{itemize}
-	\item \texttt{-d} or \texttt{--data\_file}\\
-	The CSV file to be used as data input. Defaults to \texttt{train.csv}
-	\item \texttt{-m} or \texttt{--mean\_squared}\\
-	Use the mean squared error for loss. This argument is redundant.
-	\item \texttt{-a} or \texttt{--absolute}\\
-	Use the absolute error for loss.
-	\item \texttt{-v} or \texttt{--verbose}\\
-	Turn on verbose mode. This will significantly increase training time.
-	\item \texttt{-f} or \texttt{--forest}\\
-	Train a random forest instead of a single tree.
-	\item \texttt{-l} or \texttt{--min\_leaf\_size}\\
-	Specify the minimum number of examples for each leaf node.
+	\item \texttt{-d} or \texttt{--train\_data}
+	- CSV file to be used as train input. Defaults to \texttt{train.csv}.
+	\item \texttt{-d} or \texttt{--test\_data}
+	- CSV file to be used as test input. Defaults to \texttt{test.csv}.
+	\item \texttt{-m} or \texttt{--mean\_squared}
+	- use the mean squared error for loss. True by default.
+	\item \texttt{-a} or \texttt{--absolute}
+	- use the absolute error for loss.
+	\item \texttt{-s} or \texttt{--std}
+	- minimize split standard deviation instead of a loss function.
+	\item \texttt{-v} or \texttt{--verbose}
+	- turn on verbose mode. Significantly increases training time.
+	\item \texttt{-f} or \texttt{--forest}
+	- train a random forest-like model instead of a single tree.
+	\item \texttt{-l} or \texttt{--min\_leaf\_size}
+	- specify the minimum number of examples for each leaf node.
 \end{itemize}
 
 All experiments were carried out on a Core i7-6500U mobile processor with 8GB memory, single threaded.
@@ -54,8 +58,8 @@ A minimum mean squared validation loss of approx. \textbf{0.57} and absolute los
 
 \newpage
 
-\section{Random Forest}
-The existed model could be easily extended to a random forest. Training a forest with 32 trees on Dataset 1 with a feature drop probability of 0.2 yielded a validation loss of approx. \textbf{2.2} for MSE and \textbf{2.3} for absolute error. For Dataset 2, a similar forest with 16 trees and dropout 0.2 yielded MSE on validation data as approx. \textbf{0.25}.
+\section{Forest-Like Model}
+The existed model could be easily extended to a random forest. Further reduction in loss can be obtained by dropping features at each split randomly instead of doing it for every tree, and using standard deviation minimization. Training a forest with 32 trees on Dataset 1 with a feature drop probability of 0.2 yielded a validation loss of approx. \textbf{2.2} for MSE and \textbf{2.3} for absolute error. For Dataset 2, a similar forest with 16 trees and dropout 0.2 yielded MSE on validation data as approx. \textbf{0.25}.
 
 \vspace{2mm}
 \input{d1forest.tex}
