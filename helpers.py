@@ -7,17 +7,27 @@ from random import randint
 from random import shuffle
 from collections import Counter
 
-#Set this to true to use standard deviation loss
-ALLOW_EXTENDED = True
-if ALLOW_EXTENDED:
-    import numpy as np
+# ========================= CONFIG ===============================
+
+# Set this to true to use standard deviation loss (requires numpy)
+ALLOW_EXTENDED = False
 
 # Make this true to dump graph data
 MAKE_GRAPH = False
+
+# Number of train data points to find loss on on in verbose mode
+TRAIN_VALID_COUNT = 1000
+
+# ================================================================
+
+# Extra optional imports
+if ALLOW_EXTENDED:
+    import numpy as np
+
+# Initialize graph
 GRAPH = []
 GRAPH_PRUNE = []
 GRAPH_FOREST = []
-TRAIN_VALID_COUNT = 1000
 
 class Node:
     """A single node in a tree."""
@@ -85,6 +95,8 @@ def get_split_loss(split, pred):
     elif LOSS == 'mae':
         return sum([abs(x[OUTPUT] - pred) for x in split])
     elif LOSS == 'std':
+        if not ALLOW_EXTENDED:
+            assert False, "Turn on ALLOW_EXTENDED in helpers.py to use standard deviation loss"
         return math.sqrt(np.var([x[OUTPUT] for x in split]))
     else:
         raise Exception("Unknown loss " + LOSS)
